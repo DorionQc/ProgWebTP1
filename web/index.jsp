@@ -11,6 +11,7 @@
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <script src="Javascript/jquery-3.2.1.min.js"></script>
         <script src="Javascript/jquery-ui.min.js"></script>
+        <script src="Javascript/index.js"></script>
         <link rel="stylesheet" type="text/css" href="Css/index.css"></link>
         <link rel="stylesheet" type="text/css" href="Css/jquery-ui.min.css"></link>
         <link rel="stylesheet" type="text/css" href="Css/jquery-ui.structure.min.css"></link>
@@ -45,30 +46,35 @@
                     </nav>
                 </div>
                 
-                <div id="contentDiv">
-                    <div class="content_header">
-                        <h1 id="content_title">Titre!</h1>
-                        <span id="content_img_url">URL</span>
-                    </div>
-                    
-                    <div class="content_body">
-                        <h4 id="content_main">Content!</h4>
-                        <img id="content_img" alt="Image goes here"></img>
-                    </div>
-                    
-                    <!-- Here we give information about the result of search / nav. -->
-                    <div id="buttonDiv" class="content_footer">
-                        <input type ="button" id="btnNew" value="Nouveau">
-                        <input type ="button" id="btnFlag" value="Signaler">
-                        <!-- Keep that a bit safe.  -->
-                        <input type ="button" id="btnUp" value=" + 1 ">
-                        <input type ="button" id="btnDown" value=" - 1 ">
+                <div id="content">
+                    <div id="content_grid">
+                        <div id="content_title">
+                            <h2 class="editable" data-editType="input">Une blague de merde!</h2>
+                        </div>
+                        <div id="content_url">
+                            <span class="editable" data-editType="input">https://www.commitstrip.com/wp-content/uploads/2017/09/Strip-Faire-croire-au-bug-english650-final.jpg</span>
+                        </div>
+                        <div id="content_text">
+                            <h4 class="editable" data-editType="textArea">Content!</h4>
+                        </div>
+                        <div id="content_img">
+                            <img id="content_img__img" alt="Image goes here" src="https://www.commitstrip.com/wp-content/uploads/2017/09/Strip-Faire-croire-au-bug-english650-final.jpg"></img>
+                        </div>
+                        <!-- Here we give information about the result of search / nav. -->
+                        <div id="content_buttons">
+                            <!-- Keep that a bit safe.  -->
+                            <input type="button" id="btnUp" value=" + 1 ">
+                            <input type="button" id="btnDown" value=" - 1 ">
+                            <input type="button" id="btnFlag" value="Signaler">
+                            <div id="content_buttons__spacer"></div>
+                            <input type="button" id="btnNew" value="Nouveau">
+                        </div>
                     </div>
                 </div>
                 
                 <!-- resources, links Jquery-animated names -->
-                <footer>
-                    <div class="footer_header">
+                <footer id="footer">
+                    <div id="footer_header">
                         <input type ="button" id="btnPrevFooter" value="Précédent">
                         <input type ="button" id="btnNextFooter" value="Suivant">
                     </div>

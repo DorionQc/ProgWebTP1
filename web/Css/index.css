@@ -8,6 +8,11 @@ and open the template in the editor.
     Author     : Administrateur
 */
 
+h1, h2 {
+    margin: 0;
+    padding: 0;
+}
+
 body {
     text-align: center;
     background-color: #efefef;
@@ -67,6 +72,7 @@ body {
     max-width: 70%;
     width: 70%;
     padding: 5px 40px;
+    margin-bottom: 5px;
 }
 
 #nav {
@@ -79,4 +85,89 @@ body {
 
 .whiteText {
     color: #ffffff;
+}
+
+#content {
+    width: 100%;
+}
+
+#content_grid {
+    border-style: solid;
+    display: grid;
+    grid: 
+        [row1-start] "title url" 1fr [row1-end]
+        [row2-start] "text img" 6fr [row2-end]
+        [row3-start] "buttons buttons" 1fr [row3-end]
+        / 50% 50%;
+    justify-content: stretch;
+}
+
+#content_title {
+    min-height: 60px;
+    grid-area: title;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+#content_url {
+    grid-area: url;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+}
+
+#content_text {
+    border-style: solid;
+    grid-area: text;
+}
+
+#content_img {
+    border-style: solid;
+    grid-area: img;
+}
+
+#content_img__img {
+    width: 100%;
+    height: 100%;
+}
+
+#content_buttons {
+    grid-area: buttons;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    margin: 5px 10px;
+}
+
+#content_buttons > input {
+    margin: 0 5px;
+}
+
+#content_buttons__spacer {
+    flex-grow: 1;
+}
+
+#footer {
+    margin-top: 20px;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    flex-wrap: nowrap;
+    justify-content: space-between;
+    align-items: stretch;
+    width: 100%;
+    border-style: solid;
+}
+
+#footer_header {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    justify-content: space-between;
+    align-items: stretch;
+    width: 100%;
 }
