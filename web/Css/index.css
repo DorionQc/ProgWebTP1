@@ -1,0 +1,82 @@
+/*
+To change this license header, choose License Headers in Project Properties.
+To change this template file, choose Tools | Templates
+and open the template in the editor.
+*/
+/* 
+    Created on : 2017-09-14, 13:40:30
+    Author     : Administrateur
+*/
+
+body {
+    text-align: center;
+    background-color: #efefef;
+    color: #404040;
+}
+
+#global {
+    display: inline-block;
+}
+
+#container {
+    min-width: 500px;
+    max-width: 800px;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    flex-wrap: nowrap;
+    justify-content: space-between;
+    align-items: center;
+}
+
+#header {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    justify-content: space-between;
+    align-items: stretch;
+    width: 100%;
+    border-style: solid;
+}
+
+#titleDiv {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+#bannerDiv {
+    position: relative;
+    flex-basis: auto;
+    background-image: url("../Images/Pac-Man-banniere.jpg");
+    width: 400px;
+    height: 120px;
+}
+
+#searchDiv {
+    position: absolute;
+    bottom: 5px;
+    right: 5px;
+}
+
+#navDiv {
+    margin-top: 20px;
+    border-style: solid;
+    max-width: 70%;
+    width: 70%;
+    padding: 5px 40px;
+}
+
+#nav {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    justify-content: space-around;
+    align-items: stretch;
+}
+
+.whiteText {
+    color: #ffffff;
+}
