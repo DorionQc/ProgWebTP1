@@ -171,3 +171,7 @@ body {
     align-items: stretch;
     width: 100%;
 }
+
+#animatedText {
+    margin: 0 30%;
+}

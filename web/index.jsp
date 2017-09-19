@@ -49,13 +49,13 @@
                 <div id="content">
                     <div id="content_grid">
                         <div id="content_title">
-                            <h2 class="editable" data-editType="input">Une blague de merde!</h2>
+                            <h2 id="txtTitle" data-editType="input" class="canBeEditedEventually">Une blague de merde!</h2>
                         </div>
                         <div id="content_url">
-                            <span class="editable" data-editType="input">https://www.commitstrip.com/wp-content/uploads/2017/09/Strip-Faire-croire-au-bug-english650-final.jpg</span>
+                            <span id="txtUrl" data-editType="input" class="canBeEditedEventually">https://www.commitstrip.com/wp-content/uploads/2017/09/Strip-Faire-croire-au-bug-english650-final.jpg</span>
                         </div>
                         <div id="content_text">
-                            <h4 class="editable" data-editType="textArea">Content!</h4>
+                            <h4 id="txtText" data-editType="textArea" class="canBeEditedEventually">Content!</h4>
                         </div>
                         <div id="content_img">
                             <img id="content_img__img" alt="Image goes here" src="https://www.commitstrip.com/wp-content/uploads/2017/09/Strip-Faire-croire-au-bug-english650-final.jpg"></img>
@@ -64,6 +64,7 @@
                         <div id="content_buttons">
                             <!-- Keep that a bit safe.  -->
                             <input type="button" id="btnUp" value=" + 1 ">
+                            <span id="txtScore">0</span>
                             <input type="button" id="btnDown" value=" - 1 ">
                             <input type="button" id="btnFlag" value="Signaler">
                             <div id="content_buttons__spacer"></div>
@@ -78,8 +79,12 @@
                         <input type ="button" id="btnPrevFooter" value="Précédent">
                         <input type ="button" id="btnNextFooter" value="Suivant">
                     </div>
-                    <span>Une production de Goulah! et Carl</span>
-                    <!-- Liens et animation :D -->
+                    <div id="animatedNames">
+                        <div id="animatedText">
+                            <span>Une production de Goulah! et Carl</span>
+                            <!-- Liens et animation :D -->
+                        </div>
+                    </div>
                 </footer>
             </div>
         </div>
