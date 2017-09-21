@@ -52,12 +52,12 @@
     }
     
     /* Fonctions that allow the check of a single session votings and flaggings. */
-    byte getCurrVote(int index, int[] votings) {
-        return (byte)((votings[index / 16] & (3 << index % 16)) >> index % 16);
+    int getCurrVote(int ID, int[] votings) {
+        return ((votings[ID / 16] & (3 << ID % 16)) >> ID % 16);
     }
     
-    byte getCurrFlag(int index, int[] flagings) {
-        return (byte)((flagings[index / 32] & (1 << index % 32)) >> index % 32);
+    int getCurrFlag(int ID, int[] flagings) {
+        return ((flagings[ID / 32] & (1 << ID % 32)) >> ID % 32);
     }
 %>
 
@@ -116,28 +116,30 @@
         /* Flags and votings */
         Object votings = session.getAttribute("votes");
         int[] votes;
-        if (flagings == null) {
+        if (votings == null) {
             votes = new int[1 + dataLength / 16];
             session.setAttribute("votes", votes);
         } else {
             votes = (int[])votings;
         }
         
-        byte currVote = 0;
-        byte currFlag = 0;
+        int currVote = 0;
+        int currFlag = 0;
+        int currID = data.getInt("ID");
         
         /* Done with the session. */
         data.absolute(index);
         
         String[] possibleActions = {
-            "prev", "next", "last", "first", "add", "upvote", "downvote", "flag"
+            "prev", "next", "last", "first", "add",
+            "upvote", "downvote", "flag", "show",
         };
         
         int act = 0;
         while (act < possibleActions.length && !possibleActions[act].equalsIgnoreCase(action)) {
             act++;
         }
-        if (act == 8) {
+        if (act == 9) {
             response.sendError(418, "I'm a teapot");
             return;
         }
@@ -145,6 +147,9 @@
         /* Dealing with different actions */
 	switch(act) {
             /* Reading Data, simply. */
+            case 8:
+                outputJson(data, out);
+                break;
             case 0:
                 if (!data.isFirst()) {
                     data.previous();
@@ -172,7 +177,7 @@
 
             /* Upvoting */
             case 5:
-                currVote = getCurrVote(index, votes);
+                currVote = getCurrVote(currID, votes);
                 if (currVote != 2) {
 		    state.executeUpdate(
                         "update funnycontent set score=" 
@@ -194,7 +199,7 @@
 		break;
 		/* Downvoting */
             case 6:
-                currVote = getCurrVote(index, votes);
+                currVote = getCurrVote(currID, votes);
                 if (currVote != 1) {
 		    state.executeUpdate(
                         "update funnycontent set score=" 
@@ -216,9 +221,9 @@
                 break;
 		/* Flagging */
             case 7:
-                currFlag = getCurrFlag(index, flags);
-                if (currFlag != 1) {
-		    if (data.getString("FlagAmount") == "4") {
+                currFlag = getCurrFlag(currID, flags);
+               if (currFlag != 1) {
+		    if (data.getInt("FlagAmount") >= 4) {
                         state.executeUpdate(
 		      	    "delete from funnycontent where ID = " + data.getString("ID") + ";"
                         );
@@ -226,7 +231,7 @@
 		    }
 		    else {
                         state.executeUpdate(
-                            "update funnycontent set score=" 
+                            "update funnycontent set FlagAmount=" 
                             + (Integer.parseInt(data.getString("FlagAmount")) + 1)
                             + " where ID = "
                             + data.getString("ID")
@@ -246,21 +251,27 @@
                 String url = request.getParameter("url");
                 
                 if (title.length() > 64 || content.length() > 1024 || url.length() > 4096) {
-                    response.sendError(418, "I'm a teapot");
+                    response.sendError(418, "I'm a teapot and I'm too fat too fit in");
                     return;
                 }
                 
                 PreparedStatement statement = null;
                 statement = con.prepareStatement(
-                    "insert into funnycontent (Title, Content, ImageURL, Score, FlagAmount, Date) values (?, ?, ?, 0, 0, "
-                    + DateTimeFormatter.ofPattern("yyyy-MM-dd").format(LocalDate.now()) + ");"
+                    "insert into funnycontent (Title, Content, ImageURL, Date) values (?, ?, ?, \""
+                    + DateTimeFormatter.ofPattern("yyyy-MM-dd").format(LocalDate.now()) + "\");"
                 );
+                
                 statement.setString(1, title);
                 statement.setString(2, content);
                 statement.setString(3, url);
                 statement.executeUpdate();
                 
-                data = getData(orderBy, statement); /* This might fail */
+                if (orderBy == "score") {
+                     data = statement.executeQuery("select * from funnycontent order by Score;");
+                } else {
+                     data = statement.executeQuery("select * from funnycontent order by Date;");
+                }
+                
                 data.absolute(index);
                 outputJson(data, out);
                 break;
@@ -269,15 +280,15 @@
                 break;
 	}
         session.setAttribute("index", index);
-        flags[index / 32] |= currFlag << (index % 32);
+        flags[currID / 32] |= ((int)currFlag << (currID % 32));
         session.setAttribute("flags", flags);
-        votes[index / 16] &= (-1 ^ 3 << (index % 16));
-        votes[index / 16] = currVote << (index % 16);
-        session.setAttribute("flags", votes);
+        votes[currID / 16] &= (-1 ^ (3 << (currID % 16)));
+        votes[currID / 16] = currVote << (currID % 16);
+        session.setAttribute("votes", votes);
     }
     catch (Exception ex) {
         /* Return some error Json here */
-        response.sendError(418, "I'm a teapot");
+        response.sendError(418, "I'm a teapot! " + ex.getMessage());
     }
     finally {
         try {
