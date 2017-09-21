@@ -1,7 +1,8 @@
+
 /* 
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+   Scripts of index page that aren't animations.
+   Samuel Goulet & Gérémy Desmanche
+   09-2017
  */
 
 $(document).on("click", ".editable", function() {
@@ -45,28 +46,84 @@ $(document).ready(function() {
         }
     };
     
-    var enableEdition = function() {
+    var enableEdition = function(e) {
+        e.stopPropagation();
         console.log("Enable");
         $(".canBeEditedEventually").addClass("editable");
         $(this).val("Confirmer");
-        $(this).click(disableEdition);
+        $(this).off("click");
+        $(this).click(confirmAdd);
     };
     
-    var disableEdition = function() {
+    var getOrder = function() {
+        var order;
+        if ($("#btnOrder").val() !== "Ordonner par score") {
+            order = "Literally anything else";
+        } else {
+            order = "score";
+        };
+        return order;
+    };
+    
+    $.ajax({
+            type: 'POST',
+            url: 'Server/db-requests.jsp',
+            data: {
+                action: "prev",
+                orderBy: getOrder()
+            },
+            success: function(data) {
+                updateStuff(data);
+            },
+            error: function(err) {
+                console.log(err);
+            },
+        });
+        
+        
+    var disableEdition = function(e) {
+        e.stopPropagation();
         console.log("Disable");
         $(".canBeEditedEventually").removeClass("editable");
         $(this).val("Nouveau");
+        $(this).off("click");
         $(this).click(enableEdition);
     };
     
+    var confirmAdd = function(e) {
+        e.stopPropagation();
+        console.log("Add") ; 
+        var func = disableEdition.bind(this);
+        func(e);
+        
+        $.ajax({
+            type: 'POST',
+            url: 'Server/db-requests.jsp',
+            data: {
+                action: "add",
+                orderby: getOrder(),
+                title: $("#txtTitle").val(),
+                content: $("#txtContent").val(),
+                url: $("#txtUrl").val()
+            },
+            success: function(data) {
+                updateStuff(data);
+            },
+            error: function(err) {
+                console.log(err);
+            },
+        });
+    };
+    
     var updateStuff = function(data) {
+        console.log(data);
         console.log("yo");
         document.getElementById("content_img__img").src=data.imageUrl;
-        $("#txtTitle").val(data.title);
-        $("#txtContent").val(data.content);
-        $("#txtUrl").val(data.imageUrl);
+        $("#txtTitle").html(data.title);
+        $("#txtText").html(data.content);
+        $("#txtUrl").html(data.imageUrl);
         $("#txtScore").html(data.score);
-    }
+    };
     
     $("#footer").mouseenter(function() {
         rotate(360);
@@ -76,55 +133,79 @@ $(document).ready(function() {
     
     $("#btnNew").click(enableEdition);
     
-    $("#btnFirst").click(function() {
+    $("#btnFirst").click(function(e) {
         $.ajax({
             type: 'POST',
-            url: 'db-request.jsp',
+            url: 'Server/db-requests.jsp',
             data: {
                 action: "first",
-                orderBy: $("#btnOrder").data("order")
+                orderBy: getOrder()
             },
-            success: updateStuff,
+            success: function(data) {
+                updateStuff(data);
+            },
+            error: function(err) {
+                console.log(err);
+            },
         });
+        disableEdition(e);
     });
     
-    $("#btnLast").click(function() {
+    $("#btnLast").click(function(e) {
         $.ajax({
             type: 'POST',
-            url: 'db-request.jsp',
+            url: 'Server/db-requests.jsp',
             data: {
                 action: "last",
-                orderBy: $("#btnOrder").data("order")
+                orderBy: getOrder()
             },
-            success: updateStuff,
+            success: function(data) {
+                updateStuff(data);
+            },
+            error: function(err) {
+                console.log(err);
+            },
         });
+        disableEdition(e);
     });
     
-    $("#btnNext").click(function() {
+    $("#btnNext").click(function(e) {
         $.ajax({
             type: 'POST',
-            url: 'db-request.jsp',
+            url: 'Server/db-requests.jsp',
             data: {
                 action: "next",
-                orderBy: $("#btnOrder").data("order")
+                orderBy: getOrder()
             },
-            success: updateStuff,
+            success: function(data) {
+                updateStuff(data);
+            },
+            error: function(err) {
+                console.log(err);
+            },
         });
+        disableEdition(e);
     });
     
-    $("#btnPrev").click(function() {
+    $("#btnPrev").click(function(e) {
         $.ajax({
             type: 'POST',
-            url: 'db-request.jsp',
+            url: 'Server/db-requests.jsp',
             data: {
                 action: "prev",
-                orderBy: ($("#btnOrder").val() !== "Ordonner par score" ? "score" : "blugh")
+                orderBy: getOrder() /* ($("#btnOrder").val() !== "Ordonner par score" ? "score" : "blugh") (Dafuq goulaah?)*/
             },
-            success: updateStuff,
+            success: function(data) {
+                updateStuff(data);
+            },
+            error: function(err) {
+                console.log(err);
+            },
         });
+        disableEdition(e);
     });
     
-    $("#btnOrder").click(function() {
+    $("#btnOrder").click(function(e) {
         if ($("#btnOrder").val() !== "Ordonner par score") {
             $(this).val("Ordonner par score");
         } else {
@@ -133,12 +214,19 @@ $(document).ready(function() {
         
         $.ajax({
             type: 'POST',
-            url: 'db-request.jsp',
+            url: 'Server/db-requests.jsp',
             data: {
                 action: "first",
-                orderBy: $("#btnOrder").data("order")
+                orderBy: getOrder()
             },
-            success: updateStuff,
+            success: function(data) {
+                updateStuff(data);
+            },
+            error: function(err) {
+                console.log(err);
+            },
         });
+        
+        disableEdition(e);
     });
 });
