@@ -50,7 +50,6 @@ $(document).ready(function() {
     
     var enableEdition = function(e) {
         e.stopPropagation();
-        console.log("Enable");
         $(".canBeEditedEventually").addClass("editable");
         $("#btnNew").val("Confirmer");
         $("#btnNew").off("click");
@@ -59,7 +58,6 @@ $(document).ready(function() {
     
     var disableEdition = function(e) {
         e.stopPropagation();
-        console.log("Disable");
         $(".canBeEditedEventually").removeClass("editable");
         $("#btnNew").val("Nouveau");
         $("#btnNew").off("click");
@@ -130,7 +128,6 @@ $(document).ready(function() {
     
     var confirmAdd = function(e) {
         e.stopPropagation();
-        console.log("Add") ; 
         var func = disableEdition.bind(this);
         func(e);
         
@@ -162,11 +159,18 @@ $(document).ready(function() {
         $("#txtScore").html(data.score);
     };
     
-    $("#footer").mouseenter(function() {
-        rotate(360);
-    }).mouseleave(function() {
-        rotate(0, -5, 360);
-    });
+    var putSpinnerFunctionOnAnElement = function(element) {
+        element.mouseenter(function() {
+            rotate(360);
+        }).mouseleave(function() {
+            rotate(0, -5, 360);
+        });
+    };
+    
+    putSpinnerFunctionOnAnElement($("#footer"));
+    putSpinnerFunctionOnAnElement($("#btnNext"));
+    putSpinnerFunctionOnAnElement($("#content_img__img"));
+    putSpinnerFunctionOnAnElement($("#bannerDiv"));
     
     $("#btnNew").click(enableEdition);
     
@@ -290,6 +294,31 @@ $(document).ready(function() {
             },
             error: function(err) {
                 console.log(err);
+            }
+        });
+        
+        disableEdition(e);    
+    });
+    
+    $("#btnSearch").click(function(e) {
+        $.ajax({
+            type: 'POST',
+            url: 'Server/db-requests.jsp',
+            data: {
+                action: "search",
+                title: $("#txtSearch").val(),
+                orderBy: getOrder()
+            },
+            success: function(data) {
+                updateStuff(data);
+            },
+            error: function(err) {
+                console.log(err);
+                document.getElementById("content_img__img").src="https://i2.wp.com/globalblurb.com/wp-content/uploads/2016/10/Fix-404-Not-Found-Error-In-WordPress.jpg?fit=404%2C404";
+                $("#txtTitle").html("Pas de résultat!");
+                $("#txtText").html("Impossible d'obtenir un résultat valide.");
+                $("#txtUrl").html("https://i2.wp.com/globalblurb.com/wp-content/uploads/2016/10/Fix-404-Not-Found-Error-In-WordPress.jpg?fit=404%2C404");
+                $("#txtScore").html("666");
             }
         });
         

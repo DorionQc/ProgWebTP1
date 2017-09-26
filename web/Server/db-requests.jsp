@@ -132,17 +132,19 @@
         
         String[] possibleActions = {
             "prev", "next", "last", "first", "add",
-            "upvote", "downvote", "flag", "show",
+            "upvote", "downvote", "flag", "show", "search"
         };
         
         int act = 0;
         while (act < possibleActions.length && !possibleActions[act].equalsIgnoreCase(action)) {
             act++;
         }
-        if (act == 9) {
+        if (act == 10) {
             response.sendError(418, "I'm a teapot");
             return;
         }
+        
+        PreparedStatement statement;
                 
         /* Dealing with different actions */
 	switch(act) {
@@ -245,6 +247,7 @@
 		data.absolute(index);
 		outputJson(data, out);
 		break;
+            
             case 4: 
                 String title = request.getParameter("title");
                 String content = request.getParameter("content");
@@ -255,7 +258,6 @@
                     return;
                 }
                 
-                PreparedStatement statement = null;
                 statement = con.prepareStatement(
                     "insert into funnycontent (Title, Content, ImageURL, Date) values (?, ?, ?, \""
                     + DateTimeFormatter.ofPattern("yyyy-MM-dd").format(LocalDate.now()) + "\");"
@@ -273,6 +275,18 @@
                 }
                 
                 data.absolute(index);
+                outputJson(data, out);
+                break;
+                
+            case 9:
+                statement = con.prepareStatement(
+                    "select * from funnycontent where lower(title) like lower(?) order by ?;"
+                );
+                statement.setString(1, request.getParameter("title"));
+                statement.setString(2, orderBy == "score" ? "score" : "date");
+                data = statement.executeQuery();
+                
+                data.first();
                 outputJson(data, out);
                 break;
             default:
