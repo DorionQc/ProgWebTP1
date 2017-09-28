@@ -40,8 +40,8 @@
 	
     java.sql.ResultSet getData(String orderBy, java.sql.Statement state) {
 	try {
-            if (orderBy == "score") {
-                return state.executeQuery("select * from funnycontent order by Score;");
+            if (orderBy.equals("score")) {
+                return state.executeQuery("select * from funnycontent order by Score DESC;");
             } else {
 		return state.executeQuery("select * from funnycontent order by Date;");
             }
@@ -59,11 +59,34 @@
     int getCurrFlag(int ID, int[] flagings) {
         return ((flagings[ID / 32] & (1 << ID % 32)) >> ID % 32);
     }
+    
+    void sendError(javax.servlet.http.HttpServletResponse response, String msg) {
+        try {
+            response.sendError(418, msg);
+        } catch (Exception ex2) {
+            return;
+        }
+    }
+    
+    int findPostByID(int ID, java.sql.ResultSet data) {
+        int i = 1;
+        try {
+            while (data.next() && data.getInt("ID") != ID) {
+                i++;
+            }
+            if (data.isAfterLast()) {
+                return 1;
+            }
+            return i;
+        } catch (Exception ex) {
+            return 1;
+        }
+    }
 %>
 
 <%
     try {
-        
+        session.setMaxInactiveInterval(1800000000);
         response.setContentType("application/json");
 	/* Getting parameters from request. */
         String orderBy = request.getParameter("orderBy");
@@ -74,23 +97,36 @@
         */
         
 	String action = request.getParameter("action");
-        /*
-            Possible values :
         
-        */
+        boolean error = false;
+        if (session.getAttribute("error") == null) {
+            session.setAttribute("error", 0);
+        } else {
+            try {
+                error = (Integer)session.getAttribute("error") > 0;
+            } catch (Exception ex) {
+                error = false;
+            }
+        }
+        
 	int dataLength;
+        
+        
 		
 	/* Opening the dataBase and reading its data. */
         Class.forName("com.mysql.jdbc.Driver").newInstance();
         con = java.sql.DriverManager.getConnection(
             "jdbc:mysql://localhost/tp1",
             "root", ""
-        );   
+        );
+        
         state = con.createStatement();
         java.sql.ResultSet data = getData(orderBy, state);
-
+        
 	data.last();
 	dataLength = data.getRow();
+        
+        
 	
         /* Reading or creatign session attributes */
         /* Current Ind */
@@ -125,10 +161,10 @@
         
         int currVote = 0;
         int currFlag = 0;
-        int currID = data.getInt("ID");
         
         /* Done with the session. */
         data.absolute(index);
+        int currID = data.getInt("ID");
         
         String[] possibleActions = {
             "prev", "next", "last", "first", "add",
@@ -140,45 +176,99 @@
             act++;
         }
         if (act == 10) {
-            response.sendError(418, "I'm a teapot");
+            sendError(response, "Invalid Action");
             return;
+        }
+        if (error) {
+            if (act < 2) {
+                // Next and Prev should redirect to the first image
+                act = 3;
+                session.setAttribute("error", 0);
+            } else if (act >= 4 && act <= 7) {
+                // Can't vote when on error page
+                sendError(response, "Cannot vote when on 404 page");
+                return;
+            } else {
+                session.setAttribute("error", 0);
+            }
         }
         
         PreparedStatement statement;
                 
         /* Dealing with different actions */
 	switch(act) {
-            /* Reading Data, simply. */
-            case 8:
-                outputJson(data, out);
-                break;
-            case 0:
+            case 0: // prev
                 if (!data.isFirst()) {
                     data.previous();
                     index -= 1;
                 }
+                
+                currID = data.getInt("ID");
+                currVote = getCurrVote(currID, votes);
+                currFlag = getCurrFlag(currID, flags);
 		outputJson(data, out);
 		break;
-            case 1:
+            case 1: // next
                 if (!data.isLast()) {
                     data.next();
                     index += 1;
                 }
+                
+                currID = data.getInt("ID");
+                currVote = getCurrVote(currID, votes);
+                currFlag = getCurrFlag(currID, flags);
 		outputJson(data, out);
 		break;
-            case 2:
+            case 2: // last
                 data.last();
+                currID = data.getInt("ID");
+                currVote = getCurrVote(currID, votes);
+                currFlag = getCurrFlag(currID, flags);
                 index = dataLength;
 		outputJson(data, out);
 		break;
-            case 3:
+            case 3: // first
                 data.first();
+                currID = data.getInt("ID");
+                currVote = getCurrVote(currID, votes);
+                currFlag = getCurrFlag(currID, flags);
                 index = 1;
 		outputJson(data, out);
 		break;
-
-            /* Upvoting */
-            case 5:
+            case 4: // add
+                String title = request.getParameter("title");
+                String content = request.getParameter("content");
+                String url = request.getParameter("url");
+                
+                if (title.length() > 64 || content.length() > 1024 || url.length() > 4096) {
+                    sendError(response, "Content too long");
+                    return;
+                }
+                
+                statement = con.prepareStatement(
+                    "insert into funnycontent (Title, Content, ImageURL, Date) values (?, ?, ?, \""
+                    + DateTimeFormatter.ofPattern("yyyy-MM-dd").format(LocalDate.now()) + "\");"
+                );
+                statement.setString(1, title);
+                statement.setString(2, content);
+                statement.setString(3, url);
+                statement.executeUpdate();
+                
+                if (orderBy == "score") {
+                     data = state.executeQuery("select * from funnycontent order by Score;");
+                } else {
+                     data = state.executeQuery("select * from funnycontent order by Date;");
+                }
+                index = 1;
+                data.absolute(index);
+                
+                currID = data.getInt("ID");
+                currVote = getCurrVote(currID, votes);
+                currFlag = getCurrFlag(currID, flags);
+                outputJson(data, out);
+                break;
+                
+            case 5: // upvote
                 currVote = getCurrVote(currID, votes);
                 if (currVote != 2) {
 		    state.executeUpdate(
@@ -196,11 +286,14 @@
                 }
                 
 		data = getData(orderBy, state);
+                index = findPostByID(currID, data);
 		data.absolute(index);
+                
+                currID = data.getInt("ID");
+                currFlag = getCurrFlag(currID, flags);
 		outputJson(data, out);
 		break;
-		/* Downvoting */
-            case 6:
+            case 6: // downvote
                 currVote = getCurrVote(currID, votes);
                 if (currVote != 1) {
 		    state.executeUpdate(
@@ -216,15 +309,17 @@
                         currVote = 1;
                     }
                 }
-				
 		data = getData(orderBy, state);
+                index = findPostByID(currID, data);
 		data.absolute(index);
+                
+                currID = data.getInt("ID");
+                currFlag = getCurrFlag(currID, flags);
 		outputJson(data, out);
                 break;
-		/* Flagging */
-            case 7:
+            case 7: // flag
                 currFlag = getCurrFlag(currID, flags);
-               if (currFlag != 1) {
+                if (currFlag != 1) {
 		    if (data.getInt("FlagAmount") >= 4) {
                         state.executeUpdate(
 		      	    "delete from funnycontent where ID = " + data.getString("ID") + ";"
@@ -245,64 +340,54 @@
 				
 		data = getData(orderBy, state);
 		data.absolute(index);
+                
+                currID = data.getInt("ID");
+                currVote = getCurrVote(currID, votes);
 		outputJson(data, out);
 		break;
-            
-            case 4: 
-                String title = request.getParameter("title");
-                String content = request.getParameter("content");
-                String url = request.getParameter("url");
                 
-                if (title.length() > 64 || content.length() > 1024 || url.length() > 4096) {
-                    response.sendError(418, "I'm a teapot and I'm too fat too fit in");
-                    return;
-                }
-                
-                statement = con.prepareStatement(
-                    "insert into funnycontent (Title, Content, ImageURL, Date) values (?, ?, ?, \""
-                    + DateTimeFormatter.ofPattern("yyyy-MM-dd").format(LocalDate.now()) + "\");"
-                );
-                
-                statement.setString(1, title);
-                statement.setString(2, content);
-                statement.setString(3, url);
-                statement.executeUpdate();
-                
-                if (orderBy == "score") {
-                     data = statement.executeQuery("select * from funnycontent order by Score;");
-                } else {
-                     data = statement.executeQuery("select * from funnycontent order by Date;");
-                }
-                
-                data.absolute(index);
+            case 8: // show
                 outputJson(data, out);
-                break;
                 
-            case 9:
+                currID = data.getInt("ID");
+                currVote = getCurrVote(currID, votes);
+                currFlag = getCurrFlag(currID, flags);
+                break;
+            
+            case 9: // search
                 statement = con.prepareStatement(
                     "select * from funnycontent where lower(title) like lower(?) order by ?;"
                 );
                 statement.setString(1, request.getParameter("title"));
                 statement.setString(2, orderBy == "score" ? "score" : "date");
+                index = 1;
                 data = statement.executeQuery();
+                if (!data.isBeforeFirst()) {
+                    session.setAttribute("error", 1);
+                    throw new Exception("No data found");
+                } else {
+                    data.first();
+                    outputJson(data, out);
+                }
                 
-                data.first();
-                outputJson(data, out);
+                currID = data.getInt("ID");
+                currVote = getCurrVote(currID, votes);
+                currFlag = getCurrFlag(currID, flags);
                 break;
             default:
-                response.sendError(418, "I'm a teapot");
-                break;
+                sendError(response, "Invalid Action");
+                return;
 	}
         session.setAttribute("index", index);
         flags[currID / 32] |= ((int)currFlag << (currID % 32));
         session.setAttribute("flags", flags);
         votes[currID / 16] &= (-1 ^ (3 << (currID % 16)));
-        votes[currID / 16] = currVote << (currID % 16);
+        votes[currID / 16] |= currVote << (currID % 16);
         session.setAttribute("votes", votes);
     }
     catch (Exception ex) {
         /* Return some error Json here */
-        response.sendError(418, "I'm a teapot! " + ex.getMessage());
+        sendError(response, ex.getMessage());
     }
     finally {
         try {
@@ -315,7 +400,7 @@
             }
             catch (Exception ex2) {
                 /* Return some error Json here */
-                response.sendError(418, "I'm a teapot");
+                sendError(response, ex2.getMessage());
             }
         }
     }

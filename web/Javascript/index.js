@@ -130,13 +130,12 @@ $(document).ready(function() {
         e.stopPropagation();
         var func = disableEdition.bind(this);
         func(e);
-        
         $.ajax({
             type: 'POST',
             url: 'Server/db-requests.jsp',
             data: {
                 action: "add",
-                orderby: getOrder(),
+                orderBy: getOrder(),
                 title: $("#txtTitle").html(),
                 content: $("#txtText").html(),
                 url: $("#txtUrl").html()
